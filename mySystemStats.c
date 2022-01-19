@@ -1,11 +1,15 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
 #include <utmp.h>
 #include <unistd.h>
 
-void genrateMemoryUsage() {
+void generateMemoryUsage() {
     printf(" Memory usage: ______ kilobytes\n");
     printf("---------------------------------------\n");
     printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
@@ -14,19 +18,19 @@ void genrateMemoryUsage() {
 void generateCPUUsage() {
     printf("---------------------------------------\n");
     printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
-
+    
 }
 
 void generateUserUsage() {
     printf("---------------------------------------\n");
-    printf("### Sessions/users ### \n");
+    printf("### Sessions/users ###\n");
 
     struct utmp *ut;
 
     setutent(); // Go to start of user information
     ut = getutent(); // Reads line from current position (i.e., user information)
 
-    while (ut) {
+    while (ut != NULL) {
         if (ut -> ut_type == USER_PROCESS) {
             printf("%s\t%s (%s)\n", ut -> ut_user, ut -> ut_line, ut -> ut_host); // displays user login name, device name, and host name
         }
@@ -50,41 +54,66 @@ void displaySystemInfo() {
 
 int main(int argc, char **argv) {
     
-
     int samples = 10; // default number of samples set to 10
     int tdelay = 1; // default number of seconds set to 1
 
-    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
+    bool systemFlagPresent = false;
+    bool userFlagPresent = false;
+    bool graphicsFlagPresent = false; // boolean value holding if --graphics flag is specified
+
+    // If type of output is specified by user
+    if (argc > 1) {
+
+        bool tdelayFlagPresent = false; // holds true iff samples flag has been indicated
+
+        for (int i = 1; i < argc; i++) {
+            char *token = strtok(argv[i], "="); // split each argument at "="
+            if (strcmp(token, "--samples") == 0) {
+                if (tdelayFlagPresent) {
+                    printf("Improper formatting of arguments! - samples flag must come before tdelay\n");
+                    return 1;
+                }
+                else {
+                    samples = atoi(strtok(NULL, "")); // store specified # of samples in samples
+                }
+            }
+            else if (strcmp(token, "--tdelay") == 0) {
+                tdelay = atoi(strtok(NULL, "")); // store specified delay in tdelay
+                tdelayFlagPresent = true;
+            }
+            else if (strcmp(argv[1], "--system") == 0) { // if system flag indicated
+                systemFlagPresent = true;
+            }
+            else if (strcmp(argv[1], "--user") == 0) { // if user flag indicated
+                userFlagPresent = true;
+            }
+            else if (strcmp(argv[1], "--graphics") == 0) { // if graphics flag indicated
+                graphicsFlagPresent = true;
+            }
+            else {
+                printf("Invalid argument entered!\n");
+                return 1;
+            }
+        }
+    }
     
-    // If no output specified
-    if (argc == 1) {
-        genrateMemoryUsage();
+    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
+
+    if (systemFlagPresent) { // if system flag indicated
+        generateMemoryUsage();
+        generateCPUUsage();  
+    }
+    else if (userFlagPresent) { // if user flag indicated
+        generateUserUsage();
+    }
+    else if (graphicsFlagPresent) { // if graphics flag indicated
+        printf("Graphics\n");   
+    }
+    else { // if no flag indicated
+        generateMemoryUsage();
         generateUserUsage();
         generateCPUUsage();
     }
-    // If type of output is specified by user
-    else {
-        // Checking if samples is indicated by user
-    
-
-        // Checking if tdelay is indicated by user
-
-
-        if (strcmp(argv[1], "--system") == 0) {
-            genrateMemoryUsage();
-            generateCPUUsage();
-            
-        }
-        else if (strcmp(argv[1], "--user") == 0) {
-            generateUserUsage();
-            
-        }
-        else if (strcmp(argv[1], "--graphics") == 0) {
-            printf("Graphics\n");
-            
-        }
-    }
-    
 
     displaySystemInfo(); // display System Information
     return 0;
