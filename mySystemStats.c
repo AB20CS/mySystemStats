@@ -57,11 +57,11 @@ int main(int argc, char **argv) {
     int samples = 10; // default number of samples set to 10
     int tdelay = 1; // default number of seconds set to 1
 
-    bool systemFlagPresent = false;
-    bool userFlagPresent = false;
+    bool systemFlagPresent = false; // boolean value holding if --system flag is specified
+    bool userFlagPresent = false; // boolean value holding if --user flag is specified
     bool graphicsFlagPresent = false; // boolean value holding if --graphics flag is specified
 
-    // If type of output is specified by user
+    // If flags are specified by user
     if (argc > 1) {
 
         bool tdelayFlagPresent = false; // holds true iff samples flag has been indicated
@@ -114,8 +114,8 @@ int main(int argc, char **argv) {
         generateUserUsage();
         generateCPUUsage();
     }
-
     displaySystemInfo(); // display System Information
+
     return 0;
 
 }
