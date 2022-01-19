@@ -10,18 +10,27 @@
 #include <utmp.h>
 #include <unistd.h>
 
+/**
+ * Prints memory utilization report
+ **/
 void generateMemoryUsage() {
     printf(" Memory usage: ______ kilobytes\n");
     printf("---------------------------------------\n");
     printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
 }
 
+/**
+ * Prints CPU utilization report
+ **/
 void generateCPUUsage() {
     printf("---------------------------------------\n");
     printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
     
 }
 
+/**
+ * Prints users connected in a given time and how many sessions each user is connected to
+ **/
 void generateUserUsage() {
     printf("---------------------------------------\n");
     printf("### Sessions/users ###\n");
@@ -40,6 +49,9 @@ void generateUserUsage() {
 
 }
 
+/**
+ * Prints System Information
+ **/
 void displaySystemInfo() {
     struct utsname uts;
     uname(&uts);
@@ -53,12 +65,10 @@ void displaySystemInfo() {
     printf("---------------------------------------\n");
 }
 
-
+/**
+ * Returns true iff the string s is an integer
+ **/
 bool isInteger(char *s) {
-    /*
-     * Checks if the string s is an integer
-     */
-
     int i = 0;
     while (s[i] != '\0') {
         if (isdigit(s[i]) == 0) {
@@ -67,63 +77,59 @@ bool isInteger(char *s) {
         i++;
     }
     return true;
-    
 }
 
-int main(int argc, char **argv) {
-    
-    int samples = 10; // default number of samples set to 10
-    int tdelay = 1; // default number of seconds set to 1
 
-    bool systemFlagPresent = false; // boolean value holding if --system flag is specified
-    bool userFlagPresent = false; // boolean value holding if --user flag is specified
-    bool graphicsFlagPresent = false; // boolean value holding if --graphics flag is specified
-
+/**
+ * Parses through arguments entered by user in command line.
+ * Returns true iff arguments are entered in correct format.
+ **/
+bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, 
+                    bool *userFlagPresent, bool *graphicsFlagPresent) {
     // If flags are specified by user
     if (argc > 1) {
 
-        bool samplesValPresent = false;  // holds true iff samples value has been indicated
-        bool tdelayValPresent = false; // holds true iff samples value has been indicated
-
-        for (int i = 1; i < argc; i++) {
-
-            char curr_arg[1024];
-            strcpy(curr_arg, argv[i]);
-
+        int i = 1;
+        while (i < argc) {
             char *token = strtok(argv[i], "="); // split each argument at "="
             if (strcmp(token, "--samples") == 0) {
-                samples = atoi(strtok(NULL, "")); // store specified # of samples in samples
-                samplesValPresent = true;
+                *samples = atoi(strtok(NULL, "")); // store specified # of samples in samples
             }
             else if (strcmp(token, "--tdelay") == 0) {
-                tdelay = atoi(strtok(NULL, "")); // store specified delay in tdelay
-                tdelayValPresent = true;
+                *tdelay = atoi(strtok(NULL, "")); // store specified delay in tdelay
             }
             else if (strcmp(argv[i], "--system") == 0) { // if system flag indicated
-                systemFlagPresent = true;
+                *systemFlagPresent = true;
             }
             else if (strcmp(argv[i], "--user") == 0) { // if user flag indicated
-                userFlagPresent = true;
+                *userFlagPresent = true;
             }
             else if (strcmp(argv[i], "--graphics") == 0) { // if graphics flag indicated
-                graphicsFlagPresent = true;
+                *graphicsFlagPresent = true;
             }
             // treating as positional argument
-            else if (isInteger(curr_arg) &&  !samplesValPresent && !tdelayValPresent) {
-                samples = atoi(argv[i]);
-                samplesValPresent = true;
-            }
-            else if (isInteger(curr_arg) && samplesValPresent && !tdelayValPresent) {
-                tdelay = atoi(argv[i]);
-                tdelayValPresent = true;
+            else if (isInteger(argv[i]) && i+1 < argc && isInteger(argv[i+1])) {
+                *samples = atoi(argv[i]);
+                *tdelay = atoi(argv[i+1]);
+                i++;
             }
             else {
                 printf("Invalid argument entered!\n");
-                return 1;
+                return false;
             }
+
+            i++;
         }
     }
-    
+
+    return true;
+}
+
+/**
+ * Prints final output
+ **/
+void printReport(int samples, int tdelay, bool systemFlagPresent, 
+                 bool userFlagPresent, bool graphicsFlagPresent) {
     printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
 
     if (systemFlagPresent) { // if system flag indicated
@@ -142,6 +148,23 @@ int main(int argc, char **argv) {
         generateCPUUsage();
     }
     displaySystemInfo(); // display System Information
+}
+
+
+int main(int argc, char **argv) {
+    
+    int samples = 10; // default number of samples set to 10
+    int tdelay = 1; // default number of seconds set to 1
+
+    bool systemFlagPresent = false; // boolean value holding if --system flag is specified
+    bool userFlagPresent = false; // boolean value holding if --user flag is specified
+    bool graphicsFlagPresent = false; // boolean value holding if --graphics flag is specified
+
+    bool properArgs = parseArguments(argc, argv, &samples, &tdelay, &systemFlagPresent, &userFlagPresent, &graphicsFlagPresent);
+    if (!properArgs) // if arguments incorrectly formatted
+        return 1;
+    
+    printReport(samples, tdelay, systemFlagPresent, userFlagPresent, graphicsFlagPresent);
 
     return 0;
 
