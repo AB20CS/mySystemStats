@@ -13,8 +13,17 @@
 /**
  * Prints memory utilization report
  **/
-void generateMemoryUsage() {
-    printf(" Memory usage: ______ kilobytes\n");
+void generateMemoryUsage(int samples, int tdelay) {
+    struct rusage r;
+    getrusage(RUSAGE_SELF, &r);
+
+    int i = 0;
+    while (i < samples) {
+        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
+        sleep(tdelay);
+        i++;
+    }
+    
     printf("---------------------------------------\n");
     printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
 }
@@ -133,7 +142,7 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
     printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
 
     if (systemFlagPresent) { // if system flag indicated
-        generateMemoryUsage();
+        generateMemoryUsage(samples, tdelay);
         generateCPUUsage();  
     }
     if (userFlagPresent) { // if user flag indicated
@@ -143,7 +152,7 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
         printf("Graphics\n");   
     }
     if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
-        generateMemoryUsage();
+        generateMemoryUsage(samples, tdelay);
         generateUserUsage();
         generateCPUUsage();
     }
