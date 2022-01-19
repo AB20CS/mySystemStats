@@ -5,7 +5,13 @@
 #include <utmp.h>
 #include <unistd.h>
 
-void generateSystemUsage() {
+void genrateMemoryUsage() {
+    printf(" Memory usage: ______ kilobytes\n");
+    printf("---------------------------------------\n");
+    printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
+}
+
+void generateCPUUsage() {
     printf("---------------------------------------\n");
     printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
 
@@ -47,28 +53,38 @@ int main(int argc, char **argv) {
 
     int samples = 10; // default number of samples set to 10
     int tdelay = 1; // default number of seconds set to 1
-    
-    // Checking if samples is indicated by user
-    
-
-    // Checking if tdelay is indicated by user
-
 
     printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
-
-    // Choosing type of output
-    if (strcmp(argv[1], "--system") == 0) {
-        generateSystemUsage();
-        
-    }
-    else if (strcmp(argv[1], "--user") == 0) {
+    
+    // If no output specified
+    if (argc == 1) {
+        genrateMemoryUsage();
         generateUserUsage();
-        
+        generateCPUUsage();
     }
-    else if (strcmp(argv[1], "--graphics") == 0) {
-        printf("Graphics\n");
-        
+    // If type of output is specified by user
+    else {
+        // Checking if samples is indicated by user
+    
+
+        // Checking if tdelay is indicated by user
+
+
+        if (strcmp(argv[1], "--system") == 0) {
+            genrateMemoryUsage();
+            generateCPUUsage();
+            
+        }
+        else if (strcmp(argv[1], "--user") == 0) {
+            generateUserUsage();
+            
+        }
+        else if (strcmp(argv[1], "--graphics") == 0) {
+            printf("Graphics\n");
+            
+        }
     }
+    
 
     displaySystemInfo(); // display System Information
     return 0;
