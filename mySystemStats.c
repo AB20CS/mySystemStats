@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
@@ -52,6 +53,23 @@ void displaySystemInfo() {
     printf("---------------------------------------\n");
 }
 
+
+bool isInteger(char *s) {
+    /*
+     * Checks if the string s is an integer
+     */
+
+    int i = 0;
+    while (s[i] != '\0') {
+        if (isdigit(s[i]) == 0) {
+            return false;
+        }
+        i++;
+    }
+    return true;
+    
+}
+
 int main(int argc, char **argv) {
     
     int samples = 10; // default number of samples set to 10
@@ -64,31 +82,40 @@ int main(int argc, char **argv) {
     // If flags are specified by user
     if (argc > 1) {
 
-        bool tdelayFlagPresent = false; // holds true iff samples flag has been indicated
+        bool samplesValPresent = false;  // holds true iff samples value has been indicated
+        bool tdelayValPresent = false; // holds true iff samples value has been indicated
 
         for (int i = 1; i < argc; i++) {
+
+            char curr_arg[1024];
+            strcpy(curr_arg, argv[i]);
+
             char *token = strtok(argv[i], "="); // split each argument at "="
             if (strcmp(token, "--samples") == 0) {
-                if (tdelayFlagPresent) {
-                    printf("Improper formatting of arguments! - samples flag must come before tdelay\n");
-                    return 1;
-                }
-                else {
-                    samples = atoi(strtok(NULL, "")); // store specified # of samples in samples
-                }
+                samples = atoi(strtok(NULL, "")); // store specified # of samples in samples
+                samplesValPresent = true;
             }
             else if (strcmp(token, "--tdelay") == 0) {
                 tdelay = atoi(strtok(NULL, "")); // store specified delay in tdelay
-                tdelayFlagPresent = true;
+                tdelayValPresent = true;
             }
-            else if (strcmp(argv[1], "--system") == 0) { // if system flag indicated
+            else if (strcmp(argv[i], "--system") == 0) { // if system flag indicated
                 systemFlagPresent = true;
             }
-            else if (strcmp(argv[1], "--user") == 0) { // if user flag indicated
+            else if (strcmp(argv[i], "--user") == 0) { // if user flag indicated
                 userFlagPresent = true;
             }
-            else if (strcmp(argv[1], "--graphics") == 0) { // if graphics flag indicated
+            else if (strcmp(argv[i], "--graphics") == 0) { // if graphics flag indicated
                 graphicsFlagPresent = true;
+            }
+            // treating as positional argument
+            else if (isInteger(curr_arg) &&  !samplesValPresent && !tdelayValPresent) {
+                samples = atoi(argv[i]);
+                samplesValPresent = true;
+            }
+            else if (isInteger(curr_arg) && samplesValPresent && !tdelayValPresent) {
+                tdelay = atoi(argv[i]);
+                tdelayValPresent = true;
             }
             else {
                 printf("Invalid argument entered!\n");
@@ -103,13 +130,13 @@ int main(int argc, char **argv) {
         generateMemoryUsage();
         generateCPUUsage();  
     }
-    else if (userFlagPresent) { // if user flag indicated
+    if (userFlagPresent) { // if user flag indicated
         generateUserUsage();
     }
-    else if (graphicsFlagPresent) { // if graphics flag indicated
+    if (graphicsFlagPresent) { // if graphics flag indicated
         printf("Graphics\n");   
     }
-    else { // if no flag indicated
+    if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
         generateMemoryUsage();
         generateUserUsage();
         generateCPUUsage();
