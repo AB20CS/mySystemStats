@@ -10,32 +10,76 @@
 #include <utmp.h>
 #include <unistd.h>
 
+/*
+ * Returns CPU usage as a percentage
+ */
+float calculateCPUUsage() {
+    FILE *fp = fopen("/proc/stat", "r"); // open /proc/stat file for reading
+    char stat_str[1024]; // string to store file content
+    fgets(stat_str, 1024, fp); // store file content in stat_str
+    fclose(fp); // close /proc/stat file
+
+    char *token = strtok(stat_str, " ");
+    token = strtok(NULL, " "); // move to next token
+    float user = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float nice = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float system = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float idle = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float iowait = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float irq = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float softirq = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float steal = atof(token);
+    token = strtok(NULL, " "); // move to next token
+    float guest = atof(token);
+    
+    float total_time = user + nice + system + idle + iowait + irq + softirq + steal + guest;
+    float cpu_usage = (1 - (idle / total_time)) * 100;
+    return cpu_usage;
+    
+}
+
 /**
- * Prints memory utilization report
+ * Prints System Usage
  **/
-void generateMemoryUsage(int samples, int tdelay) {
+void generateSystemUsage(int samples, int tdelay) {
+    
+    // to get memory usage (kilobytes)
     struct rusage r;
     getrusage(RUSAGE_SELF, &r);
 
+    // to get memory report
+    // struct sysinfo s;
+    // sysinfo(&s);
+    // printf("totalram = %lf\n", (float)s.freeram/s.mem_unit/1000000000);
+    // printf("freeram = %ld\n", s.freeram);
+    // printf("sharedram = %ld\n", s.sharedram);
+
+    
     int i = 0;
     while (i < samples) {
-        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
+        //fflush(stdout);
+        printf("\x1b%d", 7); // save position
+        printf(" Memory usage: %ld kilobytes, %d\n", r.ru_maxrss, i); // TODO: Remove i counter
+        
+        printf("---------------------------------------\n");
+        printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
+        printf(" total cpu use = %f%%\n", calculateCPUUsage());
         sleep(tdelay);
+        printf("\x1b%d", 8); // go back to saved position
         i++;
     }
     
-    printf("---------------------------------------\n");
+    printf("\n---------------------------------------\n");
     printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
 }
 
-/**
- * Prints CPU utilization report
- **/
-void generateCPUUsage() {
-    printf("---------------------------------------\n");
-    printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
-    
-}
 
 /**
  * Prints users connected in a given time and how many sessions each user is connected to
@@ -113,7 +157,7 @@ bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *syst
             else if (strcmp(argv[i], "--user") == 0) { // if user flag indicated
                 *userFlagPresent = true;
             }
-            else if (strcmp(argv[i], "--graphics") == 0) { // if graphics flag indicated
+            else if ((strcmp(argv[i], "--graphics") == 0) ||  (strcmp(argv[i], "-g") == 0)) { // if graphics flag indicated
                 *graphicsFlagPresent = true;
             }
             // treating as positional argument
@@ -142,8 +186,7 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
     printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
 
     if (systemFlagPresent) { // if system flag indicated
-        generateMemoryUsage(samples, tdelay);
-        generateCPUUsage();  
+        generateSystemUsage(samples, tdelay);
     }
     if (userFlagPresent) { // if user flag indicated
         generateUserUsage();
@@ -152,9 +195,8 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
         printf("Graphics\n");   
     }
     if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
-        generateMemoryUsage(samples, tdelay);
+        generateSystemUsage(samples, tdelay);
         generateUserUsage();
-        generateCPUUsage();
     }
     displaySystemInfo(); // display System Information
 }
