@@ -8,8 +8,17 @@
   1. Navigate to the directory (i.e., `cd`) in which `mySystemStats.c` is saved on your machine.
   2. In the terminal, enter `gcc -Wall -Werror mySystemStats.c -o mySystemStats` to compile the program.
   3. To execute the program, enter `./mySystemStats` into the terminal. You may also use the following flags when executing:
-      - `--system`: to print system usage report
-      - `--user`: to print users usage report
-      - `--graphics` or `-g`: to include graphical output in system usage report
-      - `--samples=N`: to indicate that the system statistics will be collected `N` times _(if this flag is not used, the default value is 10)_.
-      - `--tdelay=T`: to indicate that the system statistics will be collected every `T` seconds _(if this flag is not used, the default value is 1 second)_.
+      | Flag                | Function                                                                                                                                |
+      | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+      | `--system`          | to print system usage report                                                                                                            |
+      | `--user`            | to print users usage report                                                                                                             |
+      | `--graphics`, `-g`  | to include graphical output in system usage report                                                                                      |
+      | `--samples=N`       | to indicate that the system statistics will be collected `N` times, where `N` is a positive integer _(if this flag is not used, the default value is                               10)_.               |
+      | `--tdelay=T`        | to indicate that the system statistics will be collected every `T` seconds, where `T` is a positive integer _(if this flag is not used, the default                                 value is 1 second)_. |
+      
+      
+      - For example, `./mySystemStats --system -g --samples=5 --tdelay=2` will print the system usage report with graphics and will collect statistics every 2 seconds for a total         of 5 time points.
+      - The number of samples and frequency can also be inputted as positional arguments (i.e., as two consecutive numbers separated by a space anywhere).
+          - For example, `./mySystemStats --user 5 2`  and `./mySystemStats 5 2 --system` will both print the system usage report and will collect statistics every 2                           seconds for a total of 5 time points.
+      - `./mySystemStats` is equivalent to `./mySystemStats --system --user --samples=10 --tdelay=1`.
+  4. If `Invalid argument entered!` is printed on the screen after executing, refer back to flags outline in _Step 3_ and repeat the above steps.
