@@ -13,36 +13,50 @@
 /*
  * Returns CPU usage as a percentage
  */
-float calculateCPUUsage() {
+float calculateCPUUsage(int *lastTotal, int *lastIdle) {
     FILE *fp = fopen("/proc/stat", "r"); // open /proc/stat file for reading
     char stat_str[1024]; // string to store file content
     fgets(stat_str, 1024, fp); // store file content in stat_str
     fclose(fp); // close /proc/stat file
+    int total_time;
+    float cpu_usage;
 
     char *token = strtok(stat_str, " ");
     token = strtok(NULL, " "); // move to next token
-    float user = atof(token);
+    int user = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float nice = atof(token);
+    int nice = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float system = atof(token);
+    int system = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float idle = atof(token);
+    int idle = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float iowait = atof(token);
+    int iowait = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float irq = atof(token);
+    int irq = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float softirq = atof(token);
+    int softirq = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float steal = atof(token);
+    int steal = atoi(token);
     token = strtok(NULL, " "); // move to next token
-    float guest = atof(token);
+    int guest = atoi(token);
     
-    float total_time = user + nice + system + idle + iowait + irq + softirq + steal + guest;
-    float cpu_usage = (1 - (idle / total_time)) * 100;
+    total_time = user + nice + system + idle + iowait + irq + softirq + steal + guest;
+
+
+    if (*lastTotal == -1 && *lastIdle == -1) {
+        cpu_usage = (1 - (idle / total_time)) * 100.0;
+        
+    } 
+    else {
+        cpu_usage = 100 - (idle-*lastIdle)*100.0/(total_time-*lastTotal);;
+    }
+
+    *lastTotal = total_time;
+    *lastIdle = idle;
+
     return cpu_usage;
-    
+
 }
 
 typedef struct LinkedListNode {
@@ -77,10 +91,6 @@ void generateSystemUsage(int samples, int tdelay) {
     // to get memory report
     struct sysinfo s;
     sysinfo(&s);
-    printf("totalram = %lf\n", (float)s.freeram/s.mem_unit/1000000000);
-    printf("freeram = %ld\n", s.freeram);
-    printf("sharedram = %ld\n", s.sharedram);
-
     
     Node *mem_usage_list_head = NULL; // points to head of linked list of Memory usage string per sample
     Node *mem_usage_list_tail = NULL; // points to tail of linked list of Memory usage string per sample
@@ -89,10 +99,12 @@ void generateSystemUsage(int samples, int tdelay) {
 
     Node *cpu_usage_list_head = NULL; // points to head of linked list of CPU Usage bars per sample
     Node *cpu_usage_list_tail = NULL; // points to tail of linked list of CPU Usage bars per sample
+    int lastTotal = -1, lastIdle = -1;
+    
     int i = 0;
     while (i < samples) {
         printf("\x1b%d", 7); // save position
-        printf(" Memory usage: %ld kilobytes, %d\n", r.ru_maxrss, i); // TODO: Remove i counter
+        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss); // TODO: Remove i counter
         printf("---------------------------------------\n");
         printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
         Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
@@ -111,7 +123,7 @@ void generateSystemUsage(int samples, int tdelay) {
         
         total_ram = (float)s.totalram/s.mem_unit/1000000000;
         free_ram = (float)s.freeram/s.mem_unit/1000000000;
-        sprintf(new_sample_mem->str, "%.2f GB / %.2f GB", total_ram - free_ram, total_ram);
+        sprintf(new_sample_mem->str, "t = %d sec: %.2f GB / %.2f GB", i * tdelay, total_ram - free_ram, total_ram);
         
         // print linked list
         Node *mp = mem_usage_list_head;
@@ -126,8 +138,8 @@ void generateSystemUsage(int samples, int tdelay) {
 
         printf("---------------------------------------\n");
         printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
-        float cpu_usage = calculateCPUUsage();
-        printf(" total cpu use = %f%%\n", cpu_usage); // display CPU usage
+        float cpu_usage = calculateCPUUsage(&lastTotal, &lastIdle);
+        printf(" total cpu use = %.2f%%\n", cpu_usage); // display CPU usage
     
         // Graphics for CPU Usage
         Node *new_sample = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
@@ -143,13 +155,22 @@ void generateSystemUsage(int samples, int tdelay) {
         }
         // Set str for new_sample (string of bars)
         strcpy(new_sample->str, "");
-        for (int b = 0; b < cpu_usage * 10; b++) {
-            strcat(new_sample->str, "|");
+        if (cpu_usage < 1)
+            strcat(new_sample->str, "*");
+        else {
+            for (int b = 0; b < cpu_usage; b++) {
+                strcat(new_sample->str, "|");
+            }
         }
+        
+        char cpu_usage_str[100];
+        sprintf(cpu_usage_str, " %.2f%%", cpu_usage);
+        strcat(new_sample->str, cpu_usage_str);
+
         // print linked list
         Node *p = cpu_usage_list_head;
         while (p != NULL) {
-            printf("\t%s %f%%\n", p->str, cpu_usage); // print bars
+            printf("\t%s\n", p->str); // print bars
             p = p->next;
         }
         
