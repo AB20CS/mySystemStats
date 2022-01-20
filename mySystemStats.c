@@ -50,6 +50,20 @@ typedef struct LinkedListNode {
     struct LinkedListNode *next;
 } Node;
 
+/*
+ * Deletes the link list with head node head
+ */
+void deleteList(Node *head) {
+    Node *p = NULL;
+    Node *q = NULL;
+    p = head;
+    while (p != NULL) {
+        q = p->next;
+        free(p);
+        p = q;
+    }
+}
+
 /**
  * Prints System Usage
  **/
@@ -105,7 +119,7 @@ void generateSystemUsage(int samples, int tdelay) {
             printf("%s\n", mp->str); // print string for sample
             mp = mp->next;
         }
-
+        
         // add extra lines below
         for (int j = 0; j < samples - i - 1; j++)
             printf("\n");
@@ -138,6 +152,7 @@ void generateSystemUsage(int samples, int tdelay) {
             printf("\t%s %f%%\n", p->str, cpu_usage); // print bars
             p = p->next;
         }
+        
         // add extra lines below
         for (int j = 0; j < samples - i - 1; j++)
             printf("\n");
@@ -149,6 +164,9 @@ void generateSystemUsage(int samples, int tdelay) {
             
         i++;
     }
+
+    deleteList(mem_usage_list_head); // delete memory usage linked list
+    deleteList(cpu_usage_list_head); // delete cpu usage linked list
 }
 
 
