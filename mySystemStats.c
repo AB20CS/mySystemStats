@@ -54,35 +54,68 @@ typedef struct LinkedListNode {
  * Prints System Usage
  **/
 void generateSystemUsage(int samples, int tdelay) {
+    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
     
     // to get memory usage (kilobytes)
     struct rusage r;
     getrusage(RUSAGE_SELF, &r);
 
     // to get memory report
-    // struct sysinfo s;
-    // sysinfo(&s);
-    // printf("totalram = %lf\n", (float)s.freeram/s.mem_unit/1000000000);
-    // printf("freeram = %ld\n", s.freeram);
-    // printf("sharedram = %ld\n", s.sharedram);
+    struct sysinfo s;
+    sysinfo(&s);
+    printf("totalram = %lf\n", (float)s.freeram/s.mem_unit/1000000000);
+    printf("freeram = %ld\n", s.freeram);
+    printf("sharedram = %ld\n", s.sharedram);
 
     
-    int i = 0;
+    Node *mem_usage_list_head = NULL; // points to head of linked list of Memory usage string per sample
+    Node *mem_usage_list_tail = NULL; // points to tail of linked list of Memory usage string per sample
+    float total_ram; // holds total ram (GB) in a sample
+    float free_ram; // holds free ram (GB) in a sample
 
     Node *cpu_usage_list_head = NULL; // points to head of linked list of CPU Usage bars per sample
     Node *cpu_usage_list_tail = NULL; // points to tail of linked list of CPU Usage bars per sample
-
+    int i = 0;
     while (i < samples) {
         printf("\x1b%d", 7); // save position
         printf(" Memory usage: %ld kilobytes, %d\n", r.ru_maxrss, i); // TODO: Remove i counter
+        printf("---------------------------------------\n");
+        printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
+        Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
+        // Add new_sample to tail of linked list
+        new_sample_mem->next = NULL;
+        if (mem_usage_list_head == NULL) {
+            mem_usage_list_head = new_sample_mem;
+            mem_usage_list_tail = new_sample_mem;
+        }
+        else {
+            mem_usage_list_tail->next = new_sample_mem;
+            mem_usage_list_tail = new_sample_mem;
+        }
+        // Set str for new_sample_mem
+        strcpy(new_sample_mem->str, "");
         
+        total_ram = (float)s.totalram/s.mem_unit/1000000000;
+        free_ram = (float)s.freeram/s.mem_unit/1000000000;
+        sprintf(new_sample_mem->str, "%.2f GB / %.2f GB", total_ram - free_ram, total_ram);
+        
+        // print linked list
+        Node *mp = mem_usage_list_head;
+        while (mp != NULL) {
+            printf("%s\n", mp->str); // print string for sample
+            mp = mp->next;
+        }
+
+        // add extra lines below
+        for (int j = 0; j < samples - i - 1; j++)
+            printf("\n");
+
         printf("---------------------------------------\n");
         printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
         float cpu_usage = calculateCPUUsage();
         printf(" total cpu use = %f%%\n", cpu_usage); // display CPU usage
     
         // Graphics for CPU Usage
-
         Node *new_sample = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
         // Add new_sample to tail of linked list
         new_sample->next = NULL;
@@ -102,22 +135,18 @@ void generateSystemUsage(int samples, int tdelay) {
         // print linked list
         Node *p = cpu_usage_list_head;
         while (p != NULL) {
-            printf("\t");
-            printf("%s", p->str); // print bars
-            printf(" %f%%\n", cpu_usage); // print usage percentage
+            printf("\t%s %f%%\n", p->str, cpu_usage); // print bars
             p = p->next;
         }
-         // add extra lines below
+        // add extra lines below
         for (int j = 0; j < samples - i - 1; j++)
             printf("\n");
 
-        printf("---------------------------------------\n");
-        printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
-
-        sleep(tdelay); // delay
-
-        if (i+1 < samples) // if not printing last sample
+        if (i+1 < samples) { // if not printing last sample
+            sleep(tdelay); // delay
             printf("\x1b%d", 8); // go back to saved position
+        }
+            
         i++;
     }
 }
@@ -225,8 +254,6 @@ bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *syst
  **/
 void printReport(int samples, int tdelay, bool systemFlagPresent, 
                  bool userFlagPresent, bool graphicsFlagPresent) {
-    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
-
     if (systemFlagPresent) { // if system flag indicated
         generateSystemUsage(samples, tdelay);
     }
