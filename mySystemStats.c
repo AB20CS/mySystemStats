@@ -80,7 +80,6 @@ void deleteList(Node *head) {
  * Prints System Usage without Graphics
  **/
 void generateSystemUsage(int samples, int tdelay) {
-    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
     
     // to get memory usage (kilobytes)
     struct rusage r;
@@ -156,11 +155,9 @@ void generateSystemUsage(int samples, int tdelay) {
  * Prints System Usage with Graphics
  **/
 void generateSystemUsageGraphics(int samples, int tdelay) {
-    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
     
     // to get memory usage (kilobytes)
     struct rusage r;
-    getrusage(RUSAGE_SELF, &r);
 
     // to get memory report
     struct sysinfo s;
@@ -180,7 +177,8 @@ void generateSystemUsageGraphics(int samples, int tdelay) {
     while (i < samples) {
         
         printf("\x1b%d", 7); // save position
-        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss); // TODO: Remove i counter
+        getrusage(RUSAGE_SELF, &r); // fetch memory usage
+        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
         printf("---------------------------------------\n");
         printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
         Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
@@ -380,6 +378,8 @@ bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *syst
  **/
 void printReport(int samples, int tdelay, bool systemFlagPresent, 
                  bool userFlagPresent, bool graphicsFlagPresent) {
+    
+    printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
     if (systemFlagPresent && !graphicsFlagPresent) { // if system flag indicated without graphics
         generateSystemUsage(samples, tdelay);
     }
