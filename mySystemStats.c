@@ -44,8 +44,7 @@ float calculateCPUUsage(int *lastTotal, int *lastIdle) {
     total_time = user + nice + system + idle + iowait + irq + softirq + steal + guest;
 
     if (*lastTotal == -1 && *lastIdle == -1) { // if calculation is made for the first time (no previous time point)
-        cpu_usage = (1 - (idle / total_time)) * 100.0;
-        
+        cpu_usage = (1 - (idle / total_time)) * 100.0;    
     } 
     else { // if previous time point exists
         cpu_usage = 100 - (idle - *lastIdle) * 100.0 / (total_time - *lastTotal);;
@@ -203,10 +202,10 @@ void generateSystemUsageGraphics(int samples, int tdelay) {
         total_virtual =(float)s.totalswap/s.mem_unit/1000000000;
         free_virtual =(float)s.freeswap/s.mem_unit/1000000000;
         sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", total_ram - free_ram, total_ram, 
-                    total_ram + total_virtual - free_ram, total_ram + total_virtual);
+                    total_ram - free_ram, total_ram + total_virtual);
         // Concatenate graphics
         if (free_virtual > 0) {
-            for (int k = 0; k < total_ram + total_virtual - free_virtual * 100; k++)
+            for (int k = 0; k < total_virtual - free_virtual * 100; k++)
                 strcat(new_sample_mem->str, "#");
         }
         char temp_str[100];
