@@ -45,6 +45,11 @@ float calculateCPUUsage() {
     
 }
 
+typedef struct LinkedListNode {
+    char str[1024];
+    struct LinkedListNode *next;
+} Node;
+
 /**
  * Prints System Usage
  **/
@@ -63,21 +68,58 @@ void generateSystemUsage(int samples, int tdelay) {
 
     
     int i = 0;
+
+    Node *cpu_usage_list_head = NULL; // points to head of linked list of CPU Usage bars per sample
+    Node *cpu_usage_list_tail = NULL; // points to tail of linked list of CPU Usage bars per sample
+
     while (i < samples) {
-        //fflush(stdout);
         printf("\x1b%d", 7); // save position
         printf(" Memory usage: %ld kilobytes, %d\n", r.ru_maxrss, i); // TODO: Remove i counter
         
         printf("---------------------------------------\n");
         printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
-        printf(" total cpu use = %f%%\n", calculateCPUUsage());
-        sleep(tdelay);
-        printf("\x1b%d", 8); // go back to saved position
+        float cpu_usage = calculateCPUUsage();
+        printf(" total cpu use = %f%%\n", cpu_usage); // display CPU usage
+    
+        // Graphics for CPU Usage
+
+        Node *new_sample = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
+        // Add new_sample to tail of linked list
+        new_sample->next = NULL;
+        if (cpu_usage_list_head == NULL) {
+            cpu_usage_list_head = new_sample;
+            cpu_usage_list_tail = new_sample;
+        }
+        else {
+            cpu_usage_list_tail->next = new_sample;
+            cpu_usage_list_tail = new_sample;
+        }
+        // Set str for new_sample (string of bars)
+        strcpy(new_sample->str, "");
+        for (int b = 0; b < cpu_usage * 10; b++) {
+            strcat(new_sample->str, "|");
+        }
+        // print linked list
+        Node *p = cpu_usage_list_head;
+        while (p != NULL) {
+            printf("\t");
+            printf("%s", p->str); // print bars
+            printf(" %f%%\n", cpu_usage); // print usage percentage
+            p = p->next;
+        }
+         // add extra lines below
+        for (int j = 0; j < samples - i - 1; j++)
+            printf("\n");
+
+        printf("---------------------------------------\n");
+        printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
+
+        sleep(tdelay); // delay
+
+        if (i+1 < samples) // if not printing last sample
+            printf("\x1b%d", 8); // go back to saved position
         i++;
     }
-    
-    printf("\n---------------------------------------\n");
-    printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
 }
 
 
