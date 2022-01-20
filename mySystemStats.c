@@ -171,7 +171,7 @@ void generateSystemUsageGraphics(int samples, int tdelay) {
     float total_ram; // holds total ram (GB) in a sample
     float free_ram; // holds free ram (GB) in a sample
     float total_virtual; // holds total virtual memory (GB) in a sample
-    //float free_virtual; // holds free virtual memory (GB) in a sample
+    float free_virtual; // holds free virtual memory (GB) in a sample
 
     Node *cpu_usage_list_head = NULL; // points to head of linked list of CPU Usage bars per sample
     Node *cpu_usage_list_tail = NULL; // points to tail of linked list of CPU Usage bars per sample
@@ -201,9 +201,17 @@ void generateSystemUsageGraphics(int samples, int tdelay) {
         total_ram = (float)s.totalram/s.mem_unit/1000000000;
         free_ram = (float)s.freeram/s.mem_unit/1000000000;
         total_virtual =(float)s.totalswap/s.mem_unit/1000000000;
-        //free_virtual =(float)s.freeswap/s.mem_unit/1000000000;
-        sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB", total_ram - free_ram, total_ram, 
-                    total_ram - free_ram, total_ram + total_virtual);
+        free_virtual =(float)s.freeswap/s.mem_unit/1000000000;
+        sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", total_ram - free_ram, total_ram, 
+                    total_ram + total_virtual - free_ram, total_ram + total_virtual);
+        // Concatenate graphics
+        if (free_virtual > 0) {
+            for (int k = 0; k < total_ram + total_virtual - free_virtual * 100; k++)
+                strcat(new_sample_mem->str, "#");
+        }
+        char temp_str[100];
+        sprintf(temp_str, "* %.2f (%.2f)", total_virtual - free_virtual, total_ram - free_ram);
+        strcat(new_sample_mem->str, temp_str);
         
         // print linked list
         Node *mp = mem_usage_list_head;
@@ -377,13 +385,17 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
         generateSystemUsage(samples, tdelay);
     }
     if (systemFlagPresent && graphicsFlagPresent) { // if system and graphics flag indicated
-        generateSystemUsage(samples, tdelay);
+        generateSystemUsageGraphics(samples, tdelay);
     }
     if (userFlagPresent) { // if user flag indicated
         generateUserUsage();
     }
     if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
         generateSystemUsage(samples, tdelay);
+        generateUserUsage();
+    }
+    if (!systemFlagPresent && !userFlagPresent && graphicsFlagPresent) { // if no flag indicated except graphics
+        generateSystemUsageGraphics(samples, tdelay);
         generateUserUsage();
     }
     displaySystemInfo(); // display System Information
