@@ -18,7 +18,7 @@
       
       
       - For example, `./mySystemStats --system -g --samples=5 --tdelay=2` will print the system usage report with graphics and will collect statistics every 2 seconds for a total         of 5 time points.
-      - The number of samples and frequency can also be inputted as positional arguments (i.e., as two consecutive numbers separated by a space anywhere).
+      - The number of samples and frequency can also be inputted as positional arguments (i.e., as two consecutive numbers separated by a space, where the first number is the             number of samples and the second number is the frequency).
           - For example, `./mySystemStats --user 5 2`  and `./mySystemStats 5 2 --system` will both print the system usage report and will collect statistics every 2                           seconds for a total of 5 time points.
       - `./mySystemStats` is equivalent to `./mySystemStats --system --user --samples=10 --tdelay=1`.
   4. If `Invalid argument entered!` is printed on the screen after executing, refer back to flags outline in _Step 3_ and repeat the above steps.
