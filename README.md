@@ -5,14 +5,14 @@
 ### Function Overview
 | Function | Description|
 | --- | --- |
-| `void printReport(int samples, int tdelay, bool systemFlagPresent, bool userFlagPresent, bool graphicsFlagPresent)` | Prints final output |
-| `bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, bool *userFlagPresent, bool *graphicsFlagPresent)` | Parses through command line arguments to determine which flags have been entered. Returns true iff arguments are entered in correct format.|
-| `void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Display system usage (i.e., memory and CPU usage) without graphics |
-| `void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Display system usage (i.e., memory and CPU usage) with graphics |
-| `void generateUserUsage()` | Display users usage |
+| `void printReport(int samples, int tdelay, bool systemFlagPresent, bool userFlagPresent, bool graphicsFlagPresent)` | Prints final output. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `systemFlagPresent`, `userFlagPresent` and `graphicsFlagPresent` hold true iff the `system` flag, `user` flag and `graphics` flag are inputted by the user, respectively. |
+| `bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, bool *userFlagPresent, bool *graphicsFlagPresent)` | Parses through command line arguments to determine which flags have been entered. Returns true iff arguments are entered in correct format. `argc` is the number of command line arguments entered and `argv` is an array of strings that holds the command line arguments entered. `samples` points to the number times statistics will be collected and `tdelay` points to the frequency of statistic collection. `systemFlagPresent`, `userFlagPresent` and `graphicsFlagPresent` each point to a boolean variables that holds true iff the `system` flag, `user` flag and `graphics` flag are inputted by the user, respectively.|
+| `void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays system usage (i.e., memory and CPU usage) without graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
+| `void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays system usage (i.e., memory and CPU usage) with graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
+| `void generateUserUsage()` | Display users usage. |
 | `float calculateCPUUsage(int *lastTotal, int *lastIdle)` | Returns CPU usage as a percentage. `lastTotal` and `lastIdle` point to the total uptime and total idle time at the previous time point, respectively. |
-| `bool isInteger(char *s)` | Returns true iff the string s is an integer |
-| `void deleteList(Node *head)` | Deletes a linked list whose head node is pointed to by `head` |
+| `bool isInteger(char *s)` | Returns true iff the string s is an integer. |
+| `void deleteList(Node *head)` | Deletes a linked list whose head node is pointed to by `head`. |
 
 ### Running the Program
   1. Navigate to the directory (i.e., `cd`) in which `mySystemStats.c` is saved on your machine.
