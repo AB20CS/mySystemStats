@@ -1,6 +1,15 @@
 # mySystemStats
 ### Approach
-
+###### Step 1
+Reading through the documentation for the auxiliary C libraries listed in the assignment handout, I determined which functions I can use to gather all the required information.
+ - To get the total memory usage (in kB), I used the `ru_maxrss` field from the `rusage` struct defined in `sys/resource.h'. Getting this information required using the `getrusage()` function.
+ - To get the amount of memory used (physical and virtual), I used the `sysinfo` struct defined in `sys/sysinfo.h`. Getting this information required using the `sysinfo()` function. The following fields from the `sysinfo` struct were useful for the purposes of this program:
+    - `totalram`: the total usable main memory size
+    - `freeram`: the available memory space
+    - `totalswap`: the total swap space size
+    - `freeswap`: the size of the swap space still available
+    - `mem_unit`: the memory unit size in bytes
+- 
 
 ### Function Overview
 | Function | Description|
@@ -18,7 +27,7 @@
   1. Navigate to the directory (i.e., `cd`) in which `mySystemStats.c` is saved on your machine.
   2. In the terminal, enter `gcc -Wall -Werror mySystemStats.c -o mySystemStats` to compile the program.
   3. To execute the program, enter `./mySystemStats` into the terminal. You may also use the following flags when executing:
-      | Flag                | Description                                                                                                                                |
+      | Flag                | Description                                                                                                                             |
       | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
       | `--system`          | to print system usage report                                                                                                            |
       | `--user`            | to print users usage report                                                                                                             |
