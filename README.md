@@ -29,7 +29,8 @@ The next step involved understanding how to calculate the CPU and memory usage.
 
 Calculating CPU usage requires two time points. 
 
-<img src="http://www.sciweavers.org/upload/Tex2Img_1642781254/render.png" align="center" border="0" alt="\text{CPU usage} = (1 - \frac{\text{idle}_2 - \text{idle}_1}{\text{total time}_2 - \text{total time}_1}) \times 100\%" width="431" height="46" />
+![image](http://www.sciweavers.org/upload/Tex2Img_1642781254/render.png)
+
 Note: the subscript 1 denotes the value at the first time point and the subscript 2 denotes the value at the second time point.
 The total time can be calculated be summing all the values in the first line of the `/proc/stat` file and the idle time is the fourth number on the first line of the `/proc/stat` file.
 
