@@ -9,7 +9,8 @@ Reading through the documentation for the auxiliary C libraries listed in the as
     - `totalswap`: the total swap space size
     - `freeswap`: the size of the swap space still available
     - `mem_unit`: the memory unit size in bytes
-- 
+- To get the number of CPU cores, I called the `sysconf(_SC_NPROCESSORS_ONLN)`function from `unistd.h`.
+- To get the total CPU usage, 
 
 ### Function Overview
 | Function | Description|
