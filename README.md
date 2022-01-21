@@ -81,4 +81,42 @@ To ensure that the output is refreshed at every time point, before taking each s
   4. If `Invalid argument entered!` is printed on the screen after executing, refer back to flags outline in _Step 3_ and repeat the above steps.
  
  
+### Understanding Graphics
+This section applies if the user inputs the graphics flag (i.e., `--graphics` or `-g`). 
+ 
+**Memory Usage Graphics:**
+If the amount of virtual memory used is positive, the `#` symbol will be printed for every 0.01 GB used. Beside this graphic is an expression of the form `swapSpaceUsed (totalMemoryUsed)`, where both values are expressed in GB.
+ 
+_Sample Graphics:_
+```
+### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)
+9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |* 0.00 (9.25)
+9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |#* 0.01 (9.25)
+9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |###* 0.03 (9.25)
+9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |* 0.00 (9.25)
+9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |* 0.00 (9.25)
+```
+ 
+**CPU Usage Graphics:**
+If the CPU usage is 0%, the `*` symbol is printed. If the CPU usage is positive, a `|` is printed for every percent of usage (rounded up to the nearest percent). The CPU usage is printed beside the graphic. 
+ 
+ _Sample Graphics:_
+ ```
+ Number of cores: 4
+ total cpu use = 20.91%
+        * 0.00%
+        |||||||||||||||||||| 19.44%
+        |||||||||||||||||||||||||| 25.38%
+        |||||||||||||||||||||||||||||||||||||||| 39.70%
+        |||||||||||||||||||||||||||||||||||||||| 39.90%
+        |||||||||||||||||||||||||||||||||||| 35.34%
+        ||||||||||||||||||||||||||||||||||| 34.41%
+        ||||||||||||||||||| 18.16%
+        |||||||||||||||||||||| 22.00%
+        ||||||||||||||||||||| 20.91%
+ ```
+ 
+ 
+ 
+ 
  
