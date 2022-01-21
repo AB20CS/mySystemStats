@@ -41,6 +41,12 @@ The physical memory consists of RAM and the virtual memory consists of the RAM a
 ###### Step 3: Data Storage
 I decided to store the data collected at each time point using linked lists - one linked list for memory usage and another for CPU usage. Each timepoint is represented as a node in the linked list and each node contains a string containing all the relevant information for that time point. I had also created a struct called `UsageInfoLL` which stores pointers to the head and tail of each linked list.
 
+###### Step 4: Parsing Through User Input
+I iterated through `argv` to get access to the command line arguments entered by the user. Since some flags have a `=` sign in the middle, I used `strtok()` from `string.h` to split each argument at `=`. This way, we can read the flag name and the value inputted (if applicable separately). If the the string after the `=` cannot be converted to an integer, an error message will appear and the program will terminate. To decide which flags have been inputted by the user, I used `strcmp()` from `string.h` and used boolean variables to store whether or not each flag has been inputted. Depending on which combination of flags have been inputted, the program prints the relevant information (through a series of `if`/`else` statements.
+
+###### Step 5: Printing the Report
+
+
 ### Function Overview
 | Function | Description|
 | --- | --- |
