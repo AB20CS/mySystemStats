@@ -6,7 +6,10 @@
 | Function | Description|
 | --- | --- |
 | `void printReport(int samples, int tdelay, bool systemFlagPresent, bool userFlagPresent, bool graphicsFlagPresent)` | Prints final output |
-| `bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, bool *userFlagPresent, bool *graphicsFlagPresent)` | Parses through command line arguments. Returns true iff arguments are entered in correct format.|
+| `bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, bool *userFlagPresent, bool *graphicsFlagPresent)` | Parses through command line arguments to determine which flags have been entered. Returns true iff arguments are entered in correct format.|
+| `void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Display system usage (i.e., memory and CPU usage) without graphics |
+| `void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Display system usage (i.e., memory and CPU usage) with graphics |
+| `void generateUserUsage()` | Display users usage |
 
 ### Running the Program
   1. Navigate to the directory (i.e., `cd`) in which `mySystemStats.c` is saved on your machine.
