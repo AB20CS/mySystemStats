@@ -10,6 +10,22 @@
 #include <utmp.h>
 #include <unistd.h>
 
+typedef struct LinkedListNode {
+    char str[1024];
+    struct LinkedListNode *next;
+} Node;
+
+typedef struct UsageInformationLinkedLists {
+    Node *mem_usage_list_head; // points to head of linked list of Memory usage string per sample
+    Node *mem_usage_list_tail; // points to tail of linked list of Memory usage string per sample
+
+    Node *cpu_usage_list_head; // points to head of linked list of CPU Usage bars per sample
+    Node *cpu_usage_list_tail; // points to tail of linked list of CPU Usage bars per sample
+
+    int lastTotal;
+    int lastIdle;
+} UsageInfoLL;
+
 /*
  * Returns CPU usage as a percentage
  */
@@ -57,11 +73,6 @@ float calculateCPUUsage(int *lastTotal, int *lastIdle) {
 
 }
 
-typedef struct LinkedListNode {
-    char str[1024];
-    struct LinkedListNode *next;
-} Node;
-
 /*
  * Deletes the link list with head node head
  */
@@ -79,82 +90,62 @@ void deleteList(Node *head) {
 /**
  * Prints System Usage without Graphics
  **/
-void generateSystemUsage(int samples, int tdelay) {
+void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
     
     // to get memory usage (kilobytes)
     struct rusage r;
-    getrusage(RUSAGE_SELF, &r);
 
     // to get memory report
     struct sysinfo s;
     
-    Node *mem_usage_list_head = NULL; // points to head of linked list of Memory usage string per sample
-    Node *mem_usage_list_tail = NULL; // points to tail of linked list of Memory usage string per sample
     float total_ram; // holds total ram (GB) in a sample
     float free_ram; // holds free ram (GB) in a sample
-    float total_virtual; // holds total virtual memory (GB) in a sample
-
-    int lastTotal = -1, lastIdle = -1;
     
-    int i = 0;
-    while (i < samples) {
-        
-        printf("\x1b%d", 7); // save position
-        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss); // TODO: Remove i counter
-        printf("---------------------------------------\n");
-        printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
-        Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
-        // Add new_sample to tail of linked list
-        new_sample_mem->next = NULL;
-        if (mem_usage_list_head == NULL) {
-            mem_usage_list_head = new_sample_mem;
-            mem_usage_list_tail = new_sample_mem;
-        }
-        else {
-            mem_usage_list_tail->next = new_sample_mem;
-            mem_usage_list_tail = new_sample_mem;
-        }
-        // Set str for new_sample_mem
-        strcpy(new_sample_mem->str, "");
-        sysinfo(&s); // fetch memory information
-        total_ram = (float)s.totalram/s.mem_unit/1000000000;
-        free_ram = (float)s.freeram/s.mem_unit/1000000000;
-        total_virtual =(float)s.totalswap/s.mem_unit/1000000000;
-
-        sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB", total_ram - free_ram, total_ram, 
-                    total_ram - free_ram, total_ram + total_virtual);
-        
-        // print linked list
-        Node *mp = mem_usage_list_head;
-        while (mp != NULL) {
-            printf("%s\n", mp->str); // print string for sample
-            mp = mp->next;
-        }
-        
-        // add extra lines below
-        for (int j = 0; j < samples - i - 1; j++)
-            printf("\n");
-
-        printf("---------------------------------------\n");
-        printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
-        float cpu_usage = calculateCPUUsage(&lastTotal, &lastIdle);
-        printf(" total cpu use = %.2f%%\n", cpu_usage); // display CPU usage
-    
-        if (i+1 < samples) { // if not printing last sample
-            sleep(tdelay); // delay
-            printf("\x1b%d", 8); // go back to saved position
-        }
-            
-        i++;
+    getrusage(RUSAGE_SELF, &r); // fetch memory usage
+    printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
+    printf("---------------------------------------\n");
+    printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
+    Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
+    // Add new_sample to tail of linked list
+    new_sample_mem->next = NULL;
+    if (usageInfo->mem_usage_list_head == NULL) {
+        usageInfo->mem_usage_list_head = new_sample_mem;
+        usageInfo->mem_usage_list_tail = new_sample_mem;
     }
+    else {
+        usageInfo->mem_usage_list_tail->next = new_sample_mem;
+        usageInfo->mem_usage_list_tail = new_sample_mem;
+    }
+    // Set str for new_sample_mem
+    strcpy(new_sample_mem->str, "");
+    sysinfo(&s); // fetch memory information
+    total_ram = (float)s.totalram/s.mem_unit/1000000000;
+    free_ram = (float)s.freeram/s.mem_unit/1000000000;
 
-    deleteList(mem_usage_list_head); // delete memory usage linked list
+    sprintf(new_sample_mem->str, "%.2f GB / %.2f GB", total_ram - free_ram, total_ram);
+    
+    // print linked list
+    Node *mp = usageInfo->mem_usage_list_head;
+    while (mp != NULL) {
+        printf("%s\n", mp->str); // print string for sample
+        mp = mp->next;
+    }
+    
+    // add extra lines below
+    for (int j = 0; j < samples - i - 1; j++)
+        printf("\n");
+
+    printf("---------------------------------------\n");
+    printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
+    float cpu_usage = calculateCPUUsage(&(usageInfo->lastTotal), &(usageInfo->lastIdle));
+    printf(" total cpu use = %.2f%%\n", cpu_usage); // display CPU usage
+
 }
 
 /**
  * Prints System Usage with Graphics
  **/
-void generateSystemUsageGraphics(int samples, int tdelay) {
+void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
     
     // to get memory usage (kilobytes)
     struct rusage r;
@@ -162,117 +153,96 @@ void generateSystemUsageGraphics(int samples, int tdelay) {
     // to get memory report
     struct sysinfo s;
     
-    Node *mem_usage_list_head = NULL; // points to head of linked list of Memory usage string per sample
-    Node *mem_usage_list_tail = NULL; // points to tail of linked list of Memory usage string per sample
     float total_ram; // holds total ram (GB) in a sample
     float free_ram; // holds free ram (GB) in a sample
     float total_virtual; // holds total virtual memory (GB) in a sample
     float free_virtual; // holds free virtual memory (GB) in a sample
-
-    Node *cpu_usage_list_head = NULL; // points to head of linked list of CPU Usage bars per sample
-    Node *cpu_usage_list_tail = NULL; // points to tail of linked list of CPU Usage bars per sample
-    int lastTotal = -1, lastIdle = -1;
     
-    int i = 0;
-    while (i < samples) {
-        
-        printf("\x1b%d", 7); // save position
-        getrusage(RUSAGE_SELF, &r); // fetch memory usage
-        printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
-        printf("---------------------------------------\n");
-        printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
-        Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
-        // Add new_sample to tail of linked list
-        new_sample_mem->next = NULL;
-        if (mem_usage_list_head == NULL) {
-            mem_usage_list_head = new_sample_mem;
-            mem_usage_list_tail = new_sample_mem;
-        }
-        else {
-            mem_usage_list_tail->next = new_sample_mem;
-            mem_usage_list_tail = new_sample_mem;
-        }
-        // Set str for new_sample_mem
-        strcpy(new_sample_mem->str, "");
-        sysinfo(&s); // fetch memory information
-        total_ram = (float)s.totalram/s.mem_unit/1000000000;
-        free_ram = (float)s.freeram/s.mem_unit/1000000000;
-        total_virtual =(float)s.totalswap/s.mem_unit/1000000000;
-        free_virtual =(float)s.freeswap/s.mem_unit/1000000000;
-        sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", total_ram - free_ram, total_ram, 
-                    total_ram - free_ram, total_ram + total_virtual);
-        // Concatenate graphics
-        if (free_virtual > 0) {
-            for (int k = 0; k < total_virtual - free_virtual * 100; k++)
-                strcat(new_sample_mem->str, "#");
-        }
-        char temp_str[100];
-        sprintf(temp_str, "* %.2f (%.2f)", total_virtual - free_virtual, total_ram - free_ram);
-        strcat(new_sample_mem->str, temp_str);
-        
-        // print linked list
-        Node *mp = mem_usage_list_head;
-        while (mp != NULL) {
-            printf("%s\n", mp->str); // print string for sample
-            mp = mp->next;
-        }
-        
-        // add extra lines below
-        for (int j = 0; j < samples - i - 1; j++)
-            printf("\n");
-
-        printf("---------------------------------------\n");
-        printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
-        float cpu_usage = calculateCPUUsage(&lastTotal, &lastIdle);
-        printf(" total cpu use = %.2f%%\n", cpu_usage); // display CPU usage
-    
-        // Graphics for CPU Usage
-        Node *new_sample = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
-        // Add new_sample to tail of linked list
-        new_sample->next = NULL;
-        if (cpu_usage_list_head == NULL) {
-            cpu_usage_list_head = new_sample;
-            cpu_usage_list_tail = new_sample;
-        }
-        else {
-            cpu_usage_list_tail->next = new_sample;
-            cpu_usage_list_tail = new_sample;
-        }
-        // Set str for new_sample (string of bars)
-        strcpy(new_sample->str, "");
-        if (cpu_usage < 1)
-            strcat(new_sample->str, "*");
-        else {
-            for (int b = 0; b < cpu_usage; b++) {
-                strcat(new_sample->str, "|");
-            }
-        }
-        
-        char cpu_usage_str[100];
-        sprintf(cpu_usage_str, " %.2f%%", cpu_usage);
-        strcat(new_sample->str, cpu_usage_str);
-
-        // print linked list
-        Node *p = cpu_usage_list_head;
-        while (p != NULL) {
-            printf("\t%s\n", p->str); // print bars
-            p = p->next;
-        }
-        
-        // add extra lines below
-        for (int j = 0; j < samples - i - 1; j++)
-            printf("\n");
-
-        if (i+1 < samples) { // if not printing last sample
-            sleep(tdelay); // delay
-            printf("\x1b%d", 8); // go back to saved position
-        }
-            
-        i++;
+    getrusage(RUSAGE_SELF, &r); // fetch memory usage
+    printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
+    printf("---------------------------------------\n");
+    printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
+    Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
+    // Add new_sample to tail of linked list
+    new_sample_mem->next = NULL;
+    if (usageInfo->mem_usage_list_head == NULL) {
+        usageInfo->mem_usage_list_head = new_sample_mem;
+        usageInfo->mem_usage_list_tail = new_sample_mem;
     }
+    else {
+        usageInfo->mem_usage_list_tail->next = new_sample_mem;
+        usageInfo->mem_usage_list_tail = new_sample_mem;
+    }
+    // Set str for new_sample_mem
+    strcpy(new_sample_mem->str, "");
+    sysinfo(&s); // fetch memory information
+    total_ram = (float)s.totalram/s.mem_unit/1000000000;
+    free_ram = (float)s.freeram/s.mem_unit/1000000000;
+    total_virtual =(float)s.totalswap/s.mem_unit/1000000000;
+    free_virtual =(float)s.freeswap/s.mem_unit/1000000000;
+    sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", total_ram - free_ram, total_ram, 
+                total_ram - free_ram, total_ram + total_virtual);
+    // Concatenate graphics
+    if (free_virtual > 0) {
+        for (int k = 0; k < total_virtual - free_virtual * 100; k++)
+            strcat(new_sample_mem->str, "#");
+    }
+    char temp_str[100];
+    sprintf(temp_str, "* %.2f (%.2f)", total_virtual - free_virtual, total_ram - free_ram);
+    strcat(new_sample_mem->str, temp_str);
+    
+    // print linked list
+    Node *mp = usageInfo->mem_usage_list_head;
+    while (mp != NULL) {
+        printf("%s\n", mp->str); // print string for sample
+        mp = mp->next;
+    }
+    
+    // add extra lines below
+    for (int j = 0; j < samples - i - 1; j++)
+        printf("\n");
 
-    deleteList(mem_usage_list_head); // delete memory usage linked list
-    deleteList(cpu_usage_list_head); // delete cpu usage linked list
+    printf("---------------------------------------\n");
+    printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
+    float cpu_usage = calculateCPUUsage(&(usageInfo->lastTotal), &(usageInfo->lastIdle));
+    printf(" total cpu use = %.2f%%\n", cpu_usage); // display CPU usage
+
+    // Graphics for CPU Usage
+    Node *new_sample = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
+    // Add new_sample to tail of linked list
+    new_sample->next = NULL;
+    if (usageInfo->cpu_usage_list_head == NULL) {
+        usageInfo->cpu_usage_list_head = new_sample;
+        usageInfo->cpu_usage_list_tail = new_sample;
+    }
+    else {
+        usageInfo->cpu_usage_list_tail->next = new_sample;
+        usageInfo->cpu_usage_list_tail = new_sample;
+    }
+    // Set str for new_sample (string of bars)
+    strcpy(new_sample->str, "");
+    if (cpu_usage < 1)
+        strcat(new_sample->str, "*");
+    else {
+        for (int b = 0; b < cpu_usage; b++) {
+            strcat(new_sample->str, "|");
+        }
+    }
+    
+    char cpu_usage_str[100];
+    sprintf(cpu_usage_str, " %.2f%%", cpu_usage);
+    strcat(new_sample->str, cpu_usage_str);
+
+    // print linked list
+    Node *p = usageInfo->cpu_usage_list_head;
+    while (p != NULL) {
+        printf("\t%s\n", p->str); // print bars
+        p = p->next;
+    }
+    
+    // add extra lines below
+    for (int j = 0; j < samples - i - 1; j++)
+        printf("\n");
 }
 
 
@@ -380,23 +350,45 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
                  bool userFlagPresent, bool graphicsFlagPresent) {
     
     printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
-    if (systemFlagPresent && !graphicsFlagPresent) { // if system flag indicated without graphics
-        generateSystemUsage(samples, tdelay);
+    
+    UsageInfoLL *usageInfo = (UsageInfoLL *)calloc(1, sizeof(UsageInfoLL));
+    usageInfo->lastTotal = -1;
+    usageInfo->lastIdle = -1;
+
+    int i = 0;
+    while (i < samples) {
+        printf("\x1b%d", 7); // save position
+
+        if (systemFlagPresent && !graphicsFlagPresent) { // if system flag indicated without graphics
+            generateSystemUsage(samples, tdelay, usageInfo, i);
+        }
+        if (systemFlagPresent && graphicsFlagPresent) { // if system and graphics flag indicated
+            generateSystemUsageGraphics(samples, tdelay, usageInfo, i);
+        }
+        if (userFlagPresent) { // if user flag indicated
+            generateUserUsage();
+        }
+        if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
+            generateSystemUsage(samples, tdelay, usageInfo, i);
+            generateUserUsage();
+        }
+        if (!systemFlagPresent && !userFlagPresent && graphicsFlagPresent) { // if no flag indicated except graphics
+            generateSystemUsageGraphics(samples, tdelay, usageInfo, i);
+            generateUserUsage();
+        }
+
+        if (i+1 < samples) { // if not printing last sample
+            sleep(tdelay); // delay
+            printf("\x1b%d", 8); // go back to saved position
+        }
+        i++;
     }
-    if (systemFlagPresent && graphicsFlagPresent) { // if system and graphics flag indicated
-        generateSystemUsageGraphics(samples, tdelay);
-    }
-    if (userFlagPresent) { // if user flag indicated
-        generateUserUsage();
-    }
-    if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
-        generateSystemUsage(samples, tdelay);
-        generateUserUsage();
-    }
-    if (!systemFlagPresent && !userFlagPresent && graphicsFlagPresent) { // if no flag indicated except graphics
-        generateSystemUsageGraphics(samples, tdelay);
-        generateUserUsage();
-    }
+    
+    deleteList(usageInfo->mem_usage_list_head); // delete memory usage linked list
+    deleteList(usageInfo->cpu_usage_list_head); // delete cpu usage linked list
+    free(usageInfo);
+
+
     displaySystemInfo(); // display System Information
 }
 
