@@ -10,6 +10,9 @@
 | `void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Display system usage (i.e., memory and CPU usage) without graphics |
 | `void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Display system usage (i.e., memory and CPU usage) with graphics |
 | `void generateUserUsage()` | Display users usage |
+| `float calculateCPUUsage(int *lastTotal, int *lastIdle)` | Returns CPU usage as a percentage. `lastTotal` and `lastIdle` point to the total uptime and total idle time at the previous time point, respectively. |
+| `bool isInteger(char *s)` | Returns true iff the string s is an integer |
+| `void deleteList(Node *head)` | Deletes a linked list whose head node is pointed to by `head` |
 
 ### Running the Program
   1. Navigate to the directory (i.e., `cd`) in which `mySystemStats.c` is saved on your machine.
