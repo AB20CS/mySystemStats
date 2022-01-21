@@ -10,11 +10,13 @@
 #include <utmp.h>
 #include <unistd.h>
 
+// struct definition for linked list node
 typedef struct LinkedListNode {
     char str[1024];
     struct LinkedListNode *next;
 } Node;
 
+// struct definition for struct to hold linked lists with usage information
 typedef struct UsageInformationLinkedLists {
     Node *mem_usage_list_head; // points to head of linked list of Memory usage string per sample
     Node *mem_usage_list_tail; // points to tail of linked list of Memory usage string per sample
@@ -22,8 +24,9 @@ typedef struct UsageInformationLinkedLists {
     Node *cpu_usage_list_head; // points to head of linked list of CPU Usage bars per sample
     Node *cpu_usage_list_tail; // points to tail of linked list of CPU Usage bars per sample
 
-    int lastTotal;
-    int lastIdle;
+    // for CPU usage calculations
+    int lastTotal; // total uptime at last time point
+    int lastIdle; // total idle time at last time point
 } UsageInfoLL;
 
 /*
@@ -163,6 +166,7 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
     printf("---------------------------------------\n");
     printf("### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)\n");
     Node *new_sample_mem = (Node *)calloc(1, sizeof(Node)); // new node in linked list for new sample
+    
     // Add new_sample to tail of linked list
     new_sample_mem->next = NULL;
     if (usageInfo->mem_usage_list_head == NULL) {
@@ -297,7 +301,6 @@ bool isInteger(char *s) {
     return true;
 }
 
-
 /**
  * Parses through arguments entered by user in command line.
  * Returns true iff arguments are entered in correct format.
@@ -351,7 +354,9 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
     
     printf("Nbr of samples: %d -- every %d secs\n", samples, tdelay); // Display number of samples and delay
     
-    UsageInfoLL *usageInfo = (UsageInfoLL *)calloc(1, sizeof(UsageInfoLL));
+    UsageInfoLL *usageInfo = (UsageInfoLL *)calloc(1, sizeof(UsageInfoLL)); // allocate struct to hold lists with usage info
+
+    // Initialize time=0 points for CPU usage calculations
     usageInfo->lastTotal = -1;
     usageInfo->lastIdle = -1;
 
@@ -386,12 +391,10 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
     
     deleteList(usageInfo->mem_usage_list_head); // delete memory usage linked list
     deleteList(usageInfo->cpu_usage_list_head); // delete cpu usage linked list
-    free(usageInfo);
-
+    free(usageInfo); // free usageInfo
 
     displaySystemInfo(); // display System Information
 }
-
 
 int main(int argc, char **argv) {
     
@@ -409,5 +412,4 @@ int main(int argc, char **argv) {
     printReport(samples, tdelay, systemFlagPresent, userFlagPresent, graphicsFlagPresent);
 
     return 0;
-
 }
