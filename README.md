@@ -10,7 +10,7 @@ Reading through the documentation for the auxiliary C libraries listed in the as
     - `freeswap`: the size of the swap space still available
     - `mem_unit`: the memory unit size in bytes
 - To get the number of CPU cores, I called the `sysconf(_SC_NPROCESSORS_ONLN)`function from `unistd.h`.
-- To get the total CPU usage, I read through the `/proc/stat` file and performed the calculations outlined in Step 2.
+- To get the total CPU usage, I read through the `/proc/stat` file and performed the calculations outlined in [Step 2](https://github.com/AB20CS/mySystemStats/blob/main/README.md#step-2-calculations).
 - To get the user usage information, I used the `utmp` struct defined in `utmp.h`. Getting this information required using the `getutent()` function. The following fields in the struct were useful for this program:
     - `ut_user`: the user log-in name
     - `ut_line`: the device name
