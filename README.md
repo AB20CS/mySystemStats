@@ -1,6 +1,6 @@
 # mySystemStats
 ### Approach
-###### Step 1
+###### Step 1: Gathering Information
 Reading through the documentation for the auxiliary C libraries listed in the assignment handout, I determined which functions I can use to gather all the required information.
  - To get the total memory usage (in kB), I used the `ru_maxrss` field from the `rusage` struct defined in `sys/resource.h'. Getting this information required using the `getrusage()` function.
  - To get the amount of memory used (physical and virtual), I used the `sysinfo` struct defined in `sys/sysinfo.h`. Getting this information required using the `sysinfo()` function. The following fields from the `sysinfo` struct were useful for the purposes of this program:
@@ -22,7 +22,7 @@ Reading through the documentation for the auxiliary C libraries listed in the as
     - `release`: the release of the operating system
     - `machine`: the machine's architecture
 
-###### Step 2
+###### Step 2: Calculations
 The next step involved understanding how to calculate the CPU and memory usage.
 
 **CPU Usage:**
@@ -38,8 +38,8 @@ The total time can be calculated be summing all the values in the first line of 
 
 The physical memory consists of RAM and the virtual memory consists of the RAM and the swap space. The values are reported based on this distinction.
 
-###### Step 3
-
+###### Step 3: Data Storage
+I decided to store the data collected at each time point using linked lists - one linked list for memory usage and another for CPU usage. Each timepoint is represented as a node in the linked list and each node contains a string containing all the relevant information for that time point. I had also created a struct called `UsageInfoLL` which stores pointers to the head and tail of each linked list.
 
 ### Function Overview
 | Function | Description|
