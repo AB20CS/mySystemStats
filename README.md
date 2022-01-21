@@ -22,6 +22,20 @@ Reading through the documentation for the auxiliary C libraries listed in the as
     - `release`: the release of the operating system
     - `machine`: the machine's architecture
 
+###### Step 2
+The next step involved understanding how to calculate the CPU and memory usage.
+**CPU Usage:**
+Calculating CPU usage requires two time points. 
+
+<img src="http://www.sciweavers.org/upload/Tex2Img_1642781254/render.png" align="center" border="0" alt="\text{CPU usage} = (1 - \frac{\text{idle}_2 - \text{idle}_1}{\text{total time}_2 - \text{total time}_1}) \times 100\%" width="431" height="46" />
+Note: the subscript 1 denotes the value at the first time point and the subscript 2 denotes the value at the second time point.
+
+**Memory Usage**
+The physical memory consists of RAM and the virtual memory consists of the RAM and the swap space. The values are reported based on this distinction.
+
+###### Step 3
+
+
 ### Function Overview
 | Function | Description|
 | --- | --- |
