@@ -332,6 +332,10 @@ bool isInteger(char *s) {
  **/
 bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, 
                     bool *userFlagPresent, bool *graphicsFlagPresent) {
+    
+    bool samplesSpecified = false; // holds true iff user specifies the number of samples
+    bool tdelaySpecified = false; // holds true iff user specifies the value for tdelay
+    
     // If flags are specified by user
     if (argc > 1) {
 
@@ -340,9 +344,11 @@ bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *syst
             char *token = strtok(argv[i], "="); // split each argument at "="
             if (strcmp(token, "--samples") == 0) {
                 *samples = atoi(strtok(NULL, "")); // store specified # of samples in samples
+                samplesSpecified = true;
             }
             else if (strcmp(token, "--tdelay") == 0) {
                 *tdelay = atoi(strtok(NULL, "")); // store specified delay in tdelay
+                tdelaySpecified = true;
             }
             else if (strcmp(argv[i], "--system") == 0) { // if system flag indicated
                 *systemFlagPresent = true;
@@ -354,10 +360,16 @@ bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *syst
                 *graphicsFlagPresent = true;
             }
             // treating as positional argument
-            else if (isInteger(argv[i]) && i+1 < argc && isInteger(argv[i+1])) {
+            else if (isInteger(argv[i]) && i+1 < argc && isInteger(argv[i+1]) && !samplesSpecified && !tdelaySpecified) {
                 *samples = atoi(argv[i]);
                 *tdelay = atoi(argv[i+1]);
+                samplesSpecified = true;
+                tdelaySpecified = true;
                 i++;
+            }
+            else if (isInteger(argv[i]) && !samplesSpecified) { // single numerical value entered
+                *samples = atoi(argv[i]);
+                samplesSpecified = true;
             }
             else {
                 printf("Invalid argument entered!\n");
