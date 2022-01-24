@@ -103,6 +103,12 @@ void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)
     
     float total_ram; // holds total ram (GB) in a sample
     float free_ram; // holds free ram (GB) in a sample
+    float total_swap; // holds total virtual memory (GB) in a sample
+    float free_swap; // holds free virtual memory (GB) in a sample
+    float swap_used; // holds swap space used
+    float phys_mem_used; // holds physical memory used (GB)
+    float virtual_mem_used; // holds virtual memory used (GB)
+    float total_memory; // total_ram + total_virtual
     
     getrusage(RUSAGE_SELF, &r); // fetch memory usage
     printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
@@ -124,8 +130,16 @@ void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)
     sysinfo(&s); // fetch memory information
     total_ram = (float)s.totalram/s.mem_unit/1000000000;
     free_ram = (float)s.freeram/s.mem_unit/1000000000;
+    total_swap =(float)s.totalswap/s.mem_unit/1000000000;
+    free_swap =(float)s.freeswap/s.mem_unit/1000000000;
+    
+    total_memory = total_ram + total_swap;
+    phys_mem_used = total_ram - free_ram;
+    swap_used = total_swap - free_swap;
+    virtual_mem_used = phys_mem_used + swap_used;
 
-    sprintf(new_sample_mem->str, "%.2f GB / %.2f GB", total_ram - free_ram, total_ram);
+    sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB", phys_mem_used, total_ram, 
+                virtual_mem_used, total_memory);
     
     // print linked list
     Node *mp = usageInfo->mem_usage_list_head;
@@ -158,8 +172,13 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
     
     float total_ram; // holds total ram (GB) in a sample
     float free_ram; // holds free ram (GB) in a sample
-    float total_virtual; // holds total virtual memory (GB) in a sample
-    float free_virtual; // holds free virtual memory (GB) in a sample
+    float total_swap; // holds total virtual memory (GB) in a sample
+    float free_swap; // holds free virtual memory (GB) in a sample
+    float swap_used; // holds swap space used
+    float phys_mem_used; // holds physical memory used (GB)
+    float virtual_mem_used; // holds virtual memory used (GB)
+    float total_memory; // total_ram + total_virtual
+
     
     getrusage(RUSAGE_SELF, &r); // fetch memory usage
     printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
@@ -182,17 +201,23 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
     sysinfo(&s); // fetch memory information
     total_ram = (float)s.totalram/s.mem_unit/1000000000;
     free_ram = (float)s.freeram/s.mem_unit/1000000000;
-    total_virtual =(float)s.totalswap/s.mem_unit/1000000000;
-    free_virtual =(float)s.freeswap/s.mem_unit/1000000000;
-    sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", total_ram - free_ram, total_ram, 
-                total_ram - free_ram, total_ram + total_virtual);
+    total_swap =(float)s.totalswap/s.mem_unit/1000000000;
+    free_swap =(float)s.freeswap/s.mem_unit/1000000000;
+    
+    total_memory = total_ram + total_swap;
+    phys_mem_used = total_ram - free_ram;
+    swap_used = total_swap - free_swap;
+    virtual_mem_used = phys_mem_used + swap_used;
+
+    sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", phys_mem_used, total_ram, 
+                virtual_mem_used, total_memory);
     // Concatenate graphics
-    if (free_virtual > 0) {
-        for (int k = 0; k < total_virtual - free_virtual * 100; k++)
+    if (swap_used > 0) {
+        for (int k = 0; k < swap_used * 100; k++)
             strcat(new_sample_mem->str, "#");
     }
     char temp_str[100];
-    sprintf(temp_str, "* %.2f (%.2f)", total_virtual - free_virtual, total_ram - free_ram);
+    sprintf(temp_str, "* %.2f (%.2f)", swap_used, virtual_mem_used);
     strcat(new_sample_mem->str, temp_str);
     
     // print linked list
