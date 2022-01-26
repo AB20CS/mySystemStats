@@ -36,7 +36,12 @@ The total time can be calculated be summing all the values in the first line of 
 
 **Memory Usage:**
 
-The physical memory consists of RAM and the virtual memory consists of the RAM and the swap space. The values are reported based on this distinction.
+The physical memory consists of RAM and the virtual memory consists of the RAM and the swap space. The values are reported based on this distinction, as follows:
+- (total physical memory) = (total ram)
+- (total virtual memory) = (total ram) + (total swap space)
+- (physical memory used) = (total ram) - (free ram)
+- (swap space used) = (total swap space) - (free swap space)
+- (virtual memory used) = (physical memory used) + (swap space used)
 
 ###### Step 3: Data Storage
 I decided to store the data collected at each time point using linked lists - one linked list for memory usage and another for CPU usage. Each timepoint is represented as a node in the linked list and each node contains a string containing all the relevant information for that time point. I had also created a struct called `UsageInfoLL` which stores pointers to the head and tail of each linked list.
