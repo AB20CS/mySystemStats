@@ -10,7 +10,7 @@ Reading through the documentation for the auxiliary C libraries listed in the as
     - `freeswap`: the size of the swap space still available
     - `mem_unit`: the memory unit size in bytes
 - To get the number of CPU cores, I called the `sysconf(_SC_NPROCESSORS_ONLN)`function from `unistd.h`.
-- To get the total CPU usage, I read through the `/proc/stat` file and performed the calculations outlined in [Step 2](https://github.com/AB20CS/mySystemStats/blob/main/README.md#step-2-calculations).
+- To get the total CPU usage, I read through the `/proc/stat` file and performed the calculations outlined in Step 2.
 - To get the user usage information, I used the `utmp` struct defined in `utmp.h`. Getting this information required using the `getutent()` function. The following fields in the struct were useful for this program:
     - `ut_user`: the user log-in name
     - `ut_line`: the device name
@@ -29,7 +29,7 @@ The next step involved understanding how to calculate the CPU and memory usage.
 
 Calculating CPU usage requires two time points. 
 
-![image](http://www.sciweavers.org/upload/Tex2Img_1642781254/render.png)
+`CPU Usage = (1 - (idle_2 - idle_1)/(totalTime_2 - totalTime_1)) * 100%`
 
 Note: the subscript 1 denotes the value at the first time point and the subscript 2 denotes the value at the second time point.
 The total time can be calculated be summing all the values in the first line of the `/proc/stat` file and the idle time is the fourth number on the first line of the `/proc/stat` file.
@@ -50,7 +50,7 @@ I decided to store the data collected at each time point using linked lists - on
 I iterated through `argv` to get access to the command line arguments entered by the user. Since some flags have a `=` sign in the middle, I used `strtok()` from `string.h` to split each argument at `=`. This way, we can read the flag name and the value inputted (if applicable separately). If the the string after the `=` cannot be converted to an integer, an error message will appear and the program will terminate. To decide which flags have been inputted by the user, I used `strcmp()` from `string.h` and used boolean variables to store whether or not each flag has been inputted. Depending on which combination of flags have been inputted, the program prints the relevant information (through a series of `if`/`else` statements.
 
 ###### Step 5: Printing the Report
-To ensure that the output is refreshed at every time point, before taking each sample, I saved the position of the cursor using the `\x1b7` escape code. After printing out the relevant information using the functions described [below](https://github.com/AB20CS/mySystemStats#function-overview), I used the `\x1b8` escape code to allow for the cursor to return to previously saved position. In the next iteration, the previous output is overwritten. In this way, the output refreshes at every time point.
+To ensure that the output is refreshed at every time point, before taking each sample, I saved the position of the cursor using the `\x1b7` escape code. After printing out the relevant information using the functions described below, I used the `\x1b8` escape code to allow for the cursor to return to previously saved position. In the next iteration, the previous output is overwritten. In this way, the output refreshes at every time point.
 
 ### Function Overview
 | Function | Description|
