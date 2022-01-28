@@ -57,8 +57,10 @@ To ensure that the output is refreshed at every time point, before taking each s
 | --- | --- |
 | `void printReport(int samples, int tdelay, bool systemFlagPresent, bool userFlagPresent, bool graphicsFlagPresent)` | Prints final output. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `systemFlagPresent`, `userFlagPresent` and `graphicsFlagPresent` hold true iff the `system` flag, `user` flag and `graphics` flag are inputted by the user, respectively. |
 | `bool parseArguments(int argc, char **argv, int *samples, int *tdelay, bool *systemFlagPresent, bool *userFlagPresent, bool *graphicsFlagPresent)` | Parses through command line arguments to determine which flags have been entered. Returns true iff arguments are entered in correct format. `argc` is the number of command line arguments entered and `argv` is an array of strings that holds the command line arguments entered. `samples` points to the number times statistics will be collected and `tdelay` points to the frequency of statistic collection. `systemFlagPresent`, `userFlagPresent` and `graphicsFlagPresent` each point to a boolean variables that holds true iff the `system` flag, `user` flag and `graphics` flag are inputted by the user, respectively.|
-| `void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays system usage (i.e., memory and CPU usage) without graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
-| `void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays system usage (i.e., memory and CPU usage) with graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
+| `void generateMemoryUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays memory usage without graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
+| `void generateCPUUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays CPU usage without graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
+| `void generateMemoryUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays memory usage with graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
+| `void generateCPUUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i)` | Displays CPU usage with graphics. `samples` is the number times statistics will be collected and `tdelay` is the frequency of statistic collection. `usageInfo` is a struct that holds pointers to the linked lists holding memory/CPU usage information. `i` indicates the number times statistics will have been collected by the end of the current cycle. |
 | `void generateUserUsage()` | Display users usage. |
 | `float calculateCPUUsage(int *lastTotal, int *lastIdle)` | Returns CPU usage as a percentage. `lastTotal` and `lastIdle` point to the total uptime and total idle time at the previous time point, respectively. |
 | `bool isInteger(char *s)` | Returns true iff the string s is an integer. |
@@ -90,16 +92,20 @@ To ensure that the output is refreshed at every time point, before taking each s
 This section applies if the user inputs the graphics flag (i.e., `--graphics` or `-g`). 
  
 **Memory Usage Graphics:**
-If the amount of virtual memory used is positive, the `#` symbol will be printed for every 0.01 GB used. Beside this graphic is an expression of the form `swapSpaceUsed (totalMemoryUsed)`, where both values are expressed in GB.
+The graphics are a display of `deltaMemoryUsage`, the relative change in memory usage between the previous and current samples. If `deltaMemoryUsage` is negative, there is a `:` symbol for every change of 0.01 with a `@` at the end. If `deltaMemoryUsage` is positive, there is a `#` symbol for every change of 0.01 with a `*` at the end. If `deltaMemoryUsage` is 0.00, a `o` is printed and if `deltaMemoryUsage` is -0.00, a `@` is printed. Beside this graphic is an expression of the form `deltaMemoryUsage (totalMemoryUsed)`, where `totalMemoryUsed` is expressed in GB.
  
 _Sample Graphics:_
 ```
 ### Memory ### (Phys.Used/Tot -- Virtual Used/Tot)
-9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |* 0.00 (9.25)
-9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |#* 0.01 (9.25)
-9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |###* 0.03 (9.25)
-9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |* 0.00 (9.25)
-9.25 GB / 16.50 GB -- 9.25 GB / 17.53 GB        |* 0.00 (9.25)
+5.50 GB / 16.50 GB -- 5.50 GB / 17.53 GB        |o 0.00 (5.50)
+5.50 GB / 16.50 GB -- 5.50 GB / 17.53 GB        |o 0.00 (5.50)
+5.50 GB / 16.50 GB -- 5.50 GB / 17.53 GB        |@ -0.00 (5.50)
+5.32 GB / 16.50 GB -- 5.32 GB / 17.53 GB        |::::@ -0.03 (5.32)
+5.47 GB / 16.50 GB -- 5.47 GB / 17.53 GB        |###* 0.03 (5.47)
+5.51 GB / 16.50 GB -- 5.51 GB / 17.53 GB        |#* 0.01 (5.51)
+5.51 GB / 16.50 GB -- 5.51 GB / 17.53 GB        |o 0.00 (5.51)
+5.51 GB / 16.50 GB -- 5.51 GB / 17.53 GB        |@ -0.00 (5.51)
+5.51 GB / 16.50 GB -- 5.51 GB / 17.53 GB        |o 0.00 (5.51)
 ```
  
 **CPU Usage Graphics:**
