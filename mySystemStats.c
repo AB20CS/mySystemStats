@@ -24,6 +24,8 @@ typedef struct UsageInformationLinkedLists {
     Node *cpu_usage_list_head; // points to head of linked list of CPU Usage bars per sample
     Node *cpu_usage_list_tail; // points to tail of linked list of CPU Usage bars per sample
 
+    float last_mem_usage; // only used for memory graphics (holds total memory usage from last sample)
+
     // for CPU usage calculations
     int lastTotal; // total uptime at last time point
     int lastIdle; // total idle time at last time point
@@ -91,9 +93,9 @@ void deleteList(Node *head) {
 }
 
 /**
- * Prints System Usage without Graphics
+ * Prints Memory Usage without Graphics
  **/
-void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
+void generateMemoryUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
     
     // to get memory usage (kilobytes)
     struct rusage r;
@@ -152,6 +154,13 @@ void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)
     for (int j = 0; j < samples - i - 1; j++)
         printf("\n");
 
+}
+
+/**
+ * Prints CPU Usage without Graphics
+ **/
+void generateCPUUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
+    
     printf("---------------------------------------\n");
     printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
     float cpu_usage = calculateCPUUsage(&(usageInfo->lastTotal), &(usageInfo->lastIdle));
@@ -160,9 +169,9 @@ void generateSystemUsage(int samples, int tdelay, UsageInfoLL *usageInfo, int i)
 }
 
 /**
- * Prints System Usage with Graphics
+ * Prints Memory Usage with Graphics
  **/
-void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
+void generateMemoryUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
     
     // to get memory usage (kilobytes)
     struct rusage r;
@@ -179,7 +188,9 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
     float virtual_mem_used; // holds virtual memory used (GB)
     float total_memory; // total_ram + total_virtual
 
-    
+    float delta_mem_use; // holds relative change in memory usage from last sample (as a decimal)
+    float rounded_delta_mem_use; // holds delta_mem_use rounded to 2 decimal places
+
     getrusage(RUSAGE_SELF, &r); // fetch memory usage
     printf(" Memory usage: %ld kilobytes\n", r.ru_maxrss);
     printf("---------------------------------------\n");
@@ -211,15 +222,48 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
 
     sprintf(new_sample_mem->str, "%.2f GB / %.2f GB -- %.2f GB / %.2f GB\t|", phys_mem_used, total_ram, 
                 virtual_mem_used, total_memory);
+
     // Concatenate graphics
-    if (swap_used > 0) {
-        for (int k = 0; k < swap_used * 100; k++)
-            strcat(new_sample_mem->str, "#");
+    if (usageInfo->last_mem_usage == -1) { // if no previous sample taken
+        delta_mem_use = 0; // zero change (since it is first sample)
+        strcat(new_sample_mem->str, "o");
+    }
+    else { // if previous sample is taken
+        delta_mem_use = (virtual_mem_used - usageInfo->last_mem_usage) / (usageInfo->last_mem_usage);
+        char temp_rounded[6];
+        sprintf(temp_rounded, "%.2f", delta_mem_use);
+        rounded_delta_mem_use = atof(temp_rounded);
+
+        // zero+
+        if (rounded_delta_mem_use == 0.00 && delta_mem_use > 0) {
+            strcat(new_sample_mem->str, "o");
+        }
+        // zero-
+        else if (rounded_delta_mem_use == 0.00 && delta_mem_use < 0) {
+            strcat(new_sample_mem->str, "@");
+        }
+        // positive change in memory usage
+        else if (rounded_delta_mem_use > 0) {
+            for (float i = 0; i < delta_mem_use; i += 0.01) {
+                strcat(new_sample_mem->str, "#");
+            }
+            strcat(new_sample_mem->str, "*");
+        }
+        // negative change in memory usage
+        else if (rounded_delta_mem_use < 0) {
+            for (float i = 0; i < -delta_mem_use; i += 0.01) {
+                strcat(new_sample_mem->str, ":");
+            }
+            strcat(new_sample_mem->str, "@");
+        }
+        
     }
     char temp_str[100];
-    sprintf(temp_str, "* %.2f (%.2f)", swap_used, virtual_mem_used);
+    sprintf(temp_str, " %.2f (%.2f)", delta_mem_use, virtual_mem_used);
     strcat(new_sample_mem->str, temp_str);
     
+    usageInfo->last_mem_usage = virtual_mem_used; // update last_mem_usage
+
     // print linked list
     Node *mp = usageInfo->mem_usage_list_head;
     while (mp != NULL) {
@@ -230,6 +274,12 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
     // add extra lines below
     for (int j = 0; j < samples - i - 1; j++)
         printf("\n");
+}
+
+/**
+ * Prints CPU Usage with Graphics
+ **/
+void generateCPUUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo, int i) {
 
     printf("---------------------------------------\n");
     printf("Number of cores: %ld\n", sysconf(_SC_NPROCESSORS_ONLN)); // display number of cores
@@ -272,6 +322,7 @@ void generateSystemUsageGraphics(int samples, int tdelay, UsageInfoLL *usageInfo
     // add extra lines below
     for (int j = 0; j < samples - i - 1; j++)
         printf("\n");
+        
 }
 
 
@@ -393,6 +444,8 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
     
     UsageInfoLL *usageInfo = (UsageInfoLL *)calloc(1, sizeof(UsageInfoLL)); // allocate struct to hold lists with usage info
 
+    usageInfo->last_mem_usage = -1; // initialize last_mem_usage to -1 to indicate no previous sample taken
+
     // Initialize time=0 points for CPU usage calculations
     usageInfo->lastTotal = -1;
     usageInfo->lastIdle = -1;
@@ -402,20 +455,24 @@ void printReport(int samples, int tdelay, bool systemFlagPresent,
         printf("\x1b%d", 7); // save position
 
         if (systemFlagPresent && !graphicsFlagPresent) { // if system flag indicated without graphics
-            generateSystemUsage(samples, tdelay, usageInfo, i);
+            generateMemoryUsage(samples, tdelay, usageInfo, i);
+            generateCPUUsage(samples, tdelay, usageInfo, i);
         }
         if (systemFlagPresent && graphicsFlagPresent) { // if system and graphics flag indicated
-            generateSystemUsageGraphics(samples, tdelay, usageInfo, i);
+            generateMemoryUsageGraphics(samples, tdelay, usageInfo, i);
+            generateCPUUsageGraphics(samples, tdelay, usageInfo, i);
         }
         if (userFlagPresent) { // if user flag indicated
             generateUserUsage();
         }
         if (!systemFlagPresent && !userFlagPresent && !graphicsFlagPresent) { // if no flag indicated
-            generateSystemUsage(samples, tdelay, usageInfo, i);
+            generateMemoryUsage(samples, tdelay, usageInfo, i);
+            generateCPUUsage(samples, tdelay, usageInfo, i);
             generateUserUsage();
         }
         if (!systemFlagPresent && !userFlagPresent && graphicsFlagPresent) { // if no flag indicated except graphics
-            generateSystemUsageGraphics(samples, tdelay, usageInfo, i);
+            generateMemoryUsageGraphics(samples, tdelay, usageInfo, i);
+            generateCPUUsageGraphics(samples, tdelay, usageInfo, i);
             generateUserUsage();
         }
 
