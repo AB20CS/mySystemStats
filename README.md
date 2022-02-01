@@ -127,7 +127,7 @@ If the CPU usage is 0%, the `*` symbol is printed. If the CPU usage is positive,
         ||||||||||||||||||||| 20.91%
  ```
  
- **Potential Technical Difficulties**
+ **Potential Technical Difficulties:**
  If there are too many users connected to the machine, the formatting for the graphics may not be as desired. If this occurs, kindly connect to another machine that has less users.
  
  
