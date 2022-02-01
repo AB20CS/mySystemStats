@@ -65,7 +65,7 @@ float calculateCPUUsage(int *lastTotal, int *lastIdle) {
     total_time = user + nice + system + idle + iowait + irq + softirq + steal + guest;
 
     if (*lastTotal == -1 && *lastIdle == -1) { // if calculation is made for the first time (no previous time point)
-        cpu_usage = (1 - (idle / total_time)) * 100.0;    
+        cpu_usage = 0;    
     } 
     else { // if previous time point exists
         cpu_usage = 100 - (idle - *lastIdle) * 100.0 / (total_time - *lastTotal);;
